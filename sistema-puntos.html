@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⭐ Sistema de Puntos — La Gran Semana</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rosa: #FF6B9D;
+    --lila: #A855F7;
+    --amarillo: #FFD60A;
+    --verde: #22C55E;
+    --rojo: #EF4444;
+    --naranja: #F97316;
+    --celeste: #38BDF8;
+    --bg: #FFF8F0;
+    --card: #FFFFFF;
+    --text: #1E1B4B;
+    --text-light: #6B7280;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    background-image: radial-gradient(circle at 10% 20%, rgba(255,107,157,0.08) 0%, transparent 50%),
+                      radial-gradient(circle at 90% 80%, rgba(168,85,247,0.08) 0%, transparent 50%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h1, h2, h3, .score-number { font-family: 'Baloo 2', cursive; }
+
+  .header { text-align: center; padding: 20px 0 10px; }
+  .header h1 {
+    font-size: 2.2rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--rosa), var(--lila));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1.1;
+  }
+  .header .subtitle { font-size: 0.95rem; color: var(--text-light); margin-top: 4px; }
+  .stars-deco { font-size: 1.5rem; letter-spacing: 4px; margin-bottom: 6px; }
+
+  /* SYNC STATUS */
+  .sync-bar {
+    max-width: 1000px; margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 0.78rem; font-weight: 700; color: var(--text-light);
+  }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #D1D5DB;
+    transition: background 0.3s;
+  }
+  .sync-dot.syncing { background: var(--amarillo); animation: pulse 1s infinite; }
+  .sync-dot.ok { background: var(--verde); }
+  .sync-dot.error { background: var(--rojo); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* SETUP SCREEN */
+  .setup-screen {
+    max-width: 480px; margin: 40px auto;
+    background: var(--card); border-radius: 24px; padding: 32px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .setup-screen h2 { font-size: 1.4rem; margin-bottom: 8px; }
+  .setup-screen p { font-size: 0.88rem; color: var(--text-light); margin-bottom: 24px; line-height: 1.5; }
+  .setup-btn {
+    display: block; width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--rosa), var(--lila));
+    color: white; border: none; border-radius: 14px;
+    font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 700;
+    cursor: pointer; margin-bottom: 12px; transition: transform 0.15s;
+  }
+  .setup-btn:hover { transform: translateY(-2px); }
+  .setup-btn.secondary {
+    background: none; border: 2px solid #E5E7EB;
+    color: var(--text-light); font-size: 0.88rem;
+    font-family: 'Nunito', sans-serif; padding: 10px;
+  }
+  .setup-input {
+    width: 100%; padding: 12px 14px; border: 2px solid #E5E7EB;
+    border-radius: 12px; font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem; margin-bottom: 10px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .setup-input:focus { border-color: var(--lila); }
+  .setup-divider { font-size: 0.78rem; color: var(--text-light); margin: 12px 0; }
+
+  /* LOADING */
+  .loading-screen {
+    text-align: center; padding: 60px 20px;
+    font-size: 1rem; color: var(--text-light); font-weight: 700;
+  }
+  .spinner {
+    width: 40px; height: 40px; border: 4px solid #E5E7EB;
+    border-top-color: var(--lila); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* DAY SELECTOR */
+  .day-selector {
+    display: flex; gap: 8px; justify-content: center;
+    flex-wrap: wrap; margin: 16px 0;
+    max-width: 1000px; margin-left: auto; margin-right: auto;
+  }
+  .day-btn {
+    background: white; border: 2px solid #E5E7EB; border-radius: 12px;
+    padding: 8px 14px; font-family: 'Nunito', sans-serif;
+    font-weight: 700; font-size: 0.82rem; cursor: pointer;
+    transition: all 0.2s; color: var(--text-light);
+  }
+  .day-btn.active {
+    background: linear-gradient(135deg, var(--rosa), var(--lila));
+    border-color: transparent; color: white;
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(168,85,247,0.3);
+  }
+  .day-btn.has-data::after { content: ' ✓'; font-size: 0.7rem; }
+
+  /* GIRLS PANELS */
+  .girls-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; max-width: 1000px; margin: 0 auto 16px;
+  }
+  @media (max-width: 680px) {
+    .girls-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 1.7rem; }
+  }
+  .girl-panel {
+    background: var(--card); border-radius: 24px; padding: 18px;
+    box-shadow: var(--shadow); border-top: 5px solid var(--rosa);
+    position: relative; overflow: hidden;
+  }
+  .girl-panel.girl-2 { border-top-color: var(--lila); }
+  .girl-panel::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 100px; height: 100px; border-radius: 0 0 0 100%; opacity: 0.07;
+  }
+  .girl-panel:first-child::before { background: var(--rosa); }
+  .girl-panel.girl-2::before { background: var(--lila); }
+  .girl-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .girl-emoji {
+    font-size: 2.2rem; width: 52px; height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,107,157,0.1); border-radius: 16px;
+  }
+  .girl-2 .girl-emoji { background: rgba(168,85,247,0.1); }
+  .girl-name { font-size: 1.3rem; font-weight: 800; color: var(--rosa); }
+  .girl-2 .girl-name { color: var(--lila); }
+  .girl-age { font-size: 0.8rem; color: var(--text-light); font-weight: 600; }
+  .score-display {
+    background: linear-gradient(135deg, rgba(255,107,157,0.1), rgba(255,107,157,0.05));
+    border-radius: 16px; padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+  }
+  .girl-2 .score-display { background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.05)); }
+  .score-label { font-size: 0.8rem; color: var(--text-light); font-weight: 700; }
+  .score-number { font-size: 2rem; font-weight: 800; color: var(--rosa); line-height: 1; }
+  .girl-2 .score-number { color: var(--lila); }
+  .score-money { font-size: 0.85rem; font-weight: 700; color: var(--verde); }
+  .progress-bar-wrap { background: rgba(0,0,0,0.06); border-radius: 20px; height: 8px; margin-top: 8px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--rosa), var(--lila)); transition: width 0.5s ease; }
+  .girl-2 .progress-bar { background: linear-gradient(90deg, var(--lila), var(--celeste)); }
+  .category-title {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--text-light);
+    margin: 12px 0 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .task-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border-radius: 10px; margin-bottom: 4px;
+    cursor: pointer; transition: all 0.15s;
+    border: 1.5px solid transparent; background: rgba(0,0,0,0.02);
+  }
+  .task-item:hover { background: rgba(0,0,0,0.05); }
+  .task-item.done { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
+  .task-item.negative { background: rgba(239,68,68,0.04); cursor: default; }
+  .task-item.negative:hover { background: rgba(239,68,68,0.06); }
+  .task-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .task-check {
+    width: 22px; height: 22px; border-radius: 6px; border: 2px solid #D1D5DB;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s; font-size: 0.7rem;
+  }
+  .task-item.done .task-check { background: var(--verde); border-color: var(--verde); color: white; }
+  .task-name { font-size: 0.82rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .task-item.done .task-name { color: var(--text-light); text-decoration: line-through; }
+  .task-pts { font-size: 0.8rem; font-weight: 800; color: var(--verde); white-space: nowrap; margin-left: 6px; }
+  .task-pts.negative { color: var(--rojo); }
+  .neg-counter { display: flex; align-items: center; gap: 6px; }
+  .neg-btn {
+    width: 26px; height: 26px; border-radius: 8px; border: none;
+    cursor: pointer; font-size: 0.9rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .neg-btn.minus, .neg-btn.plus { background: rgba(239,68,68,0.15); color: var(--rojo); }
+  .neg-btn:hover { transform: scale(1.15); }
+  .neg-count { font-size: 0.85rem; font-weight: 800; min-width: 20px; text-align: center; color: var(--rojo); }
+
+  /* SHARED */
+  .shared-section {
+    max-width: 1000px; margin: 0 auto 16px;
+    background: var(--card); border-radius: 24px; padding: 18px 20px;
+    box-shadow: var(--shadow); border-top: 5px solid var(--amarillo);
+  }
+  .shared-title { font-size: 1rem; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .shared-subtitle { font-size: 0.78rem; color: var(--text-light); margin-bottom: 12px; }
+  .shared-task-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border-radius: 10px; margin-bottom: 4px;
+    border: 1.5px solid transparent; background: rgba(0,0,0,0.02);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .shared-task-item:hover { background: rgba(255,214,10,0.06); }
+  .shared-task-item.done { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
+  .shared-pts-pill { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .split-badge {
+    font-size: 0.7rem; font-weight: 700;
+    background: rgba(255,214,10,0.25); color: #92400E;
+    padding: 2px 7px; border-radius: 20px; white-space: nowrap;
+  }
+  .shared-task-item.done .split-badge { background: rgba(34,197,94,0.2); color: #15803D; }
+
+  /* SUMMARY */
+  .summary-section {
+    max-width: 1000px; margin: 0 auto 24px;
+    background: var(--card); border-radius: 24px; padding: 20px; box-shadow: var(--shadow);
+  }
+  .summary-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .summary-card { border-radius: 16px; padding: 14px; text-align: center; }
+  .summary-card.girl-1-card { background: linear-gradient(135deg, rgba(255,107,157,0.1), rgba(255,107,157,0.05)); border: 1.5px solid rgba(255,107,157,0.2); }
+  .summary-card.girl-2-card { background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.05)); border: 1.5px solid rgba(168,85,247,0.2); }
+  .summary-name { font-size: 0.85rem; font-weight: 800; margin-bottom: 6px; }
+  .summary-pts { font-size: 1.8rem; font-weight: 800; font-family: 'Baloo 2', cursive; line-height: 1; }
+  .summary-pts.rosa { color: var(--rosa); }
+  .summary-pts.lila { color: var(--lila); }
+  .summary-money-big { font-size: 1.1rem; font-weight: 800; color: var(--verde); margin-top: 4px; }
+  .summary-pct { font-size: 0.75rem; color: var(--text-light); margin-top: 2px; }
+
+  /* REF */
+  .ref-section {
+    max-width: 1000px; margin: 0 auto 24px;
+    background: var(--card); border-radius: 24px; padding: 20px; box-shadow: var(--shadow);
+  }
+  details summary { cursor: pointer; user-select: none; font-size: 1rem; font-weight: 800; }
+  .ref-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 12px; }
+  .ref-table th { text-align: left; padding: 8px 10px; font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--text-light); border-bottom: 2px solid #F3F4F6; }
+  .ref-table td { padding: 7px 10px; border-bottom: 1px solid #F9FAFB; vertical-align: top; }
+  .ref-table tr:last-child td { border-bottom: none; }
+  .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
+  .cat-1 { background: rgba(56,189,248,0.15); color: #0369A1; }
+  .cat-2 { background: rgba(34,197,94,0.15); color: #15803D; }
+  .cat-3 { background: rgba(249,115,22,0.15); color: #C2410C; }
+  .cat-4 { background: rgba(168,85,247,0.15); color: #7E22CE; }
+  .cat-5 { background: rgba(255,214,10,0.2); color: #92400E; }
+  .cat-neg { background: rgba(239,68,68,0.12); color: #B91C1C; }
+  .pts-badge { font-weight: 800; font-family: 'Baloo 2', cursive; }
+  .pts-pos { color: var(--verde); }
+  .pts-neg { color: var(--rojo); }
+
+  .reset-btn {
+    display: block; margin: 12px auto 0;
+    background: none; border: 1.5px solid #E5E7EB; border-radius: 10px;
+    padding: 8px 20px; font-family: 'Nunito', sans-serif;
+    font-weight: 700; font-size: 0.8rem; color: var(--text-light); cursor: pointer; transition: all 0.2s;
+  }
+  .reset-btn:hover { border-color: var(--rojo); color: var(--rojo); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1E1B4B; color: white; padding: 10px 20px;
+    border-radius: 50px; font-size: 0.85rem; font-weight: 700;
+    transition: transform 0.3s; pointer-events: none; z-index: 999;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .confetti-pop {
+    position: fixed; top: 50%; left: 50%; font-size: 2rem;
+    pointer-events: none; animation: pop 0.8s ease-out forwards; z-index: 999;
+  }
+  @keyframes pop {
+    0% { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+    60% { transform: translate(-50%,-80px) scale(1.4); opacity: 1; }
+    100% { transform: translate(-50%,-150px) scale(1); opacity: 0; }
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="stars-deco">⭐✨🌟</div>
+  <h1>La Gran Semana</h1>
+  <p class="subtitle">Sumá puntos cada día — ¡el domingo ves tu premio! 💰</p>
+</div>
+
+<!-- SYNC BAR -->
+<div class="sync-bar" id="syncBar">
+  <div class="sync-dot" id="syncDot"></div>
+  <span id="syncMsg">Conectando...</span>
+</div>
+
+<!-- SETUP SCREEN -->
+<div class="setup-screen hidden" id="setupScreen">
+  <div style="font-size:3rem;margin-bottom:12px">🔗</div>
+  <h2>Configurar acceso compartido</h2>
+  <p>La primera vez creás el espacio compartido. Después compartís el link con tu marido y los dos ven los mismos datos.</p>
+  <button class="setup-btn" onclick="createNewBin()">✨ Crear nuevo espacio compartido</button>
+  <div class="setup-divider">— o si ya tenés uno —</div>
+  <input class="setup-input" type="text" id="binIdInput" placeholder="Pegá tu ID (ej: 68abc123ef456...)">
+  <button class="setup-btn secondary" onclick="connectExistingBin()">Conectarme a un espacio existente</button>
+</div>
+
+<!-- LOADING -->
+<div class="loading-screen hidden" id="loadingScreen">
+  <div class="spinner"></div>
+  Cargando datos...
+</div>
+
+<!-- APP (hidden until loaded) -->
+<div id="appContent" class="hidden">
+  <!-- SHARE INFO -->
+  <div style="max-width:1000px;margin:0 auto 12px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:14px;padding:10px 16px;font-size:0.78rem;color:#15803D;font-weight:700;display:flex;align-items:center;gap:8px;">
+    <span>🔗</span>
+    <span>ID compartido: <span id="sharedIdDisplay" style="font-family:monospace;background:white;padding:2px 6px;border-radius:6px;border:1px solid #86EFAC"></span></span>
+    <button onclick="copyShareLink()" style="margin-left:auto;background:#22C55E;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.72rem;font-weight:700;cursor:pointer;">Copiar link</button>
+  </div>
+
+  <!-- DAY SELECTOR -->
+  <div class="day-selector" id="daySelector"></div>
+
+  <!-- GIRLS GRID -->
+  <div class="girls-grid" id="girlsGrid"></div>
+
+  <!-- SHARED TASKS -->
+  <div class="shared-section" id="sharedSection"></div>
+
+  <!-- WEEKLY SUMMARY -->
+  <div class="summary-section">
+    <div class="summary-title">📊 Resumen de la semana</div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <button class="reset-btn" onclick="confirmReset()">🔄 Nueva semana</button>
+  </div>
+
+  <!-- REFERENCE TABLE -->
+  <div class="ref-section">
+    <details>
+      <summary>📋 Tabla de referencia — todos los puntos</summary>
+      <table class="ref-table" id="refTable"></table>
+    </details>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const BLOB_API = 'https://jsonblob.com/api/jsonBlob';
+
+// ============================================================
+// DATA
+// ============================================================
+const GIRLS = [
+  { id: 'g1', name: 'Nao',    age: '11 años', emoji: '🌟', color: 'rosa', ptsIndex: 0 },
+  { id: 'g2', name: 'Chiara', age: '6 años',  emoji: '🌸', color: 'lila', ptsIndex: 1 }
+];
+const DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const MAX_POINTS = 200;
+
+const CATEGORIES = [
+  {
+    id: 'propias', label: '🪥 Cosas propias', badge: 'cat-1', badgeText: 'PROPIAS',
+    tasks: [
+      { id: 'levantarse',    name: 'Levantarse temprano sola',     pts: [1,1] },
+      { id: 'dientes',       name: 'Lavarse los dientes',          pts: [1,1] },
+      { id: 'cambiarse',     name: 'Cambiarse sola',               pts: [1,1] },
+      { id: 'deberes',       name: 'Hacer los deberes sola',       pts: [3,3] },
+      { id: 'banarse',       name: 'Bañarse sola',                 pts: [2,2] },
+      { id: 'ordenar_cosas', name: 'Ordenar sus cosas',            pts: [1,1] },
+      { id: 'acostar',       name: 'Acostarse antes de las 11 pm', pts: [1,1] },
+    ]
+  },
+  {
+    id: 'casa_simple', label: '🍽️ Casa — nivel fácil', badge: 'cat-2', badgeText: 'FÁCIL',
+    tasks: [
+      { id: 'ordenar_mesa',    name: 'Ordenar la mesa',                pts: [1,1] },
+      { id: 'poner_mesa',      name: 'Poner la mesa',                  pts: [2,2] },
+      { id: 'sacar_mesa',      name: 'Sacar la mesa',                  pts: [1,1] },
+      { id: 'ordenar_casa',    name: 'Ordenar la casa (zona)',         pts: [2,2] },
+      { id: 'gata',            name: 'Darle de comer a Mía (la gata)', pts: [2,2] },
+      { id: 'molly_comida',    name: 'Darle de comer a Molly',         pts: [2,2] },
+      { id: 'agua',            name: 'Llenar las botellas de agua',    pts: [1,1] },
+      { id: 'caja_mia',        name: 'Limpiar la caja de Mía',        pts: [4,4] },
+      { id: 'guardar_vajilla', name: 'Guardar vajilla seca',           pts: [2,2] },
+    ]
+  },
+  {
+    id: 'casa_media', label: '🧹 Casa — nivel medio', badge: 'cat-3', badgeText: 'MEDIO',
+    tasks: [
+      { id: 'barrer',         name: 'Barrer la casa',           pts: [4,4] },
+      { id: 'lavar_platos',   name: 'Lavar los platos',         pts: [4,4] },
+      { id: 'lavar_ropa',     name: 'Lavar ropa',               pts: [4,4] },
+      { id: 'colgar_ropa',    name: 'Colgar ropa',              pts: [3,3] },
+      { id: 'doblar_ropa',    name: 'Doblar y guardar ropa',    pts: [4,4] },
+      { id: 'regar',          name: 'Regar las plantas',        pts: [2,2] },
+      { id: 'limpiar_muebles',name: 'Limpiar los muebles',      pts: [3,3] },
+    ]
+  },
+  {
+    id: 'experto', label: '🧽 Nivel experto', badge: 'cat-4', badgeText: 'EXPERTO',
+    tasks: [
+      { id: 'microondas', name: 'Limpiar el microondas',               pts: [6,6]   },
+      { id: 'cocina',     name: 'Limpiar la cocina',                   pts: [8,8]   },
+      { id: 'horno',      name: 'Limpiar el horno',                    pts: [8,8]   },
+      { id: 'banio',      name: 'Limpiar baño (inodoro/ducha/pileta)', pts: [10,10] },
+      { id: 'telaranias', name: 'Sacar telarañas',                     pts: [5,5]   },
+    ]
+  },
+  {
+    id: 'maximo', label: '🏆 Nivel MÁXIMO', badge: 'cat-5', badgeText: 'MÁXIMO',
+    tasks: [
+      { id: 'caca_molly', name: '💩 Levantar caca de Molly', pts: [10,10] },
+    ]
+  }
+];
+
+const NEGATIVES = [
+  { id: 'pelear',         name: 'Pelearse con la hermana',    pts: [-2,-2] },
+  { id: 'pegar',          name: 'Pegar',                      pts: [-4,-3] },
+  { id: 'romper_cosas',   name: 'Romper cosas de la hermana', pts: [-4,-3] },
+  { id: 'desobedecer',    name: 'Desobedecer a mamá/papá',    pts: [-3,-2] },
+  { id: 'mentir',         name: 'Mentir',                     pts: [-2,-2] },
+  { id: 'rabieta',        name: 'Rabieta / berrinche',        pts: [-1,-1] },
+  { id: 'malas_palabras', name: 'Decir malas palabras',       pts: [-2,-1] },
+];
+
+const SHARED_TASKS = [
+  { id: 'sh_limpiar_casa',   name: 'Limpiar la casa juntas',          pts: 14 },
+  { id: 'sh_lavar_platos',   name: 'Lavar y secar los platos juntas', pts: 10 },
+  { id: 'sh_barrer',         name: 'Barrer toda la casa juntas',      pts: 10 },
+  { id: 'sh_doblar_ropa',    name: 'Doblar y guardar ropa juntas',    pts: 10 },
+  { id: 'sh_ordenar_cuarto', name: 'Ordenar el cuarto de las dos',    pts: 8  },
+  { id: 'sh_regar',          name: 'Regar todas las plantas juntas',  pts: 6  },
+  { id: 'sh_molly_mia',      name: 'Cuidar a Molly y Mía juntas',     pts: 6  },
+  { id: 'sh_cocina',         name: 'Limpiar la cocina juntas',        pts: 18 },
+  { id: 'sh_banio',          name: 'Limpiar el baño juntas',          pts: 20 },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = null;
+let binId = null;
+let saveTimer = null;
+
+function defaultState() {
+  const days = {};
+  DAYS.forEach(d => {
+    days[d] = { shared: {} };
+    GIRLS.forEach(g => {
+      days[d][g.id] = { tasks: {}, negatives: {} };
+      NEGATIVES.forEach(n => { days[d][g.id].negatives[n.id] = 0; });
+    });
+  });
+  return { days, currentDay: DAYS[0] };
+}
+
+function sanitizeState(s) {
+  if (!s || !s.days) return defaultState();
+  DAYS.forEach(d => {
+    if (!s.days[d]) s.days[d] = { shared: {} };
+    if (!s.days[d].shared) s.days[d].shared = {};
+    GIRLS.forEach(g => {
+      if (!s.days[d][g.id]) s.days[d][g.id] = { tasks: {}, negatives: {} };
+      if (!s.days[d][g.id].tasks) s.days[d][g.id].tasks = {};
+      if (!s.days[d][g.id].negatives) s.days[d][g.id].negatives = {};
+    });
+  });
+  if (!s.currentDay) s.currentDay = DAYS[0];
+  return s;
+}
+
+// ============================================================
+// JSONBLOB API — sin cuenta, sin API key
+// ============================================================
+const BLOB_API = 'https://jsonblob.com/api/jsonBlob';
+const BIN_ID_KEY = 'puntos_blob_id';
+
+function setSyncStatus(status, msg) {
+  const dot = document.getElementById('syncDot');
+  const msgEl = document.getElementById('syncMsg');
+  dot.className = 'sync-dot ' + status;
+  msgEl.textContent = msg;
+}
+
+async function createBin(data) {
+  const res = await fetch(BLOB_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('No se pudo crear');
+  // El ID viene en el header Location: https://jsonblob.com/api/jsonBlob/ID
+  const location = res.headers.get('Location') || '';
+  const id = location.split('/').pop();
+  if (!id) throw new Error('No se obtuvo ID');
+  return id;
+}
+
+async function readBin(id) {
+  const res = await fetch(`${BLOB_API}/${id}`, {
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!res.ok) throw new Error('No se pudo leer');
+  return await res.json();
+}
+
+async function writeBin(id, data) {
+  const res = await fetch(`${BLOB_API}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('No se pudo guardar');
+}
+
+// Guardar con debounce para no spamear la API
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  setSyncStatus('syncing', 'Guardando...');
+  saveTimer = setTimeout(async () => {
+    try {
+      await writeBin(binId, state);
+      setSyncStatus('ok', 'Guardado ✓');
+    } catch(e) {
+      setSyncStatus('error', 'Error al guardar — reintentando...');
+      // Reintentar una vez
+      setTimeout(async () => {
+        try {
+          await writeBin(binId, state);
+          setSyncStatus('ok', 'Guardado ✓');
+        } catch { setSyncStatus('error', 'Sin conexión'); }
+      }, 3000);
+    }
+  }, 800);
+}
+
+// ============================================================
+// INIT FLOW
+// ============================================================
+async function init() {
+  // Chequear si hay un bin ID en la URL (?id=xxx) o en localStorage
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlId = urlParams.get('id');
+  const storedId = localStorage.getItem(BIN_ID_KEY);
+  binId = urlId || storedId;
+
+  if (binId) {
+    showLoading();
+    try {
+      const data = await readBin(binId);
+      state = sanitizeState(data);
+      localStorage.setItem(BIN_ID_KEY, binId);
+      showApp();
+    } catch(e) {
+      // ID inválido, mostrar setup
+      binId = null;
+      localStorage.removeItem(BIN_ID_KEY);
+      showSetup();
+    }
+  } else {
+    showSetup();
+  }
+}
+
+async function createNewBin() {
+  const btn = document.querySelector('.setup-btn');
+  btn.textContent = 'Creando...';
+  btn.disabled = true;
+  try {
+    const newState = defaultState();
+    const id = await createBin(newState);
+    binId = id;
+    state = newState;
+    localStorage.setItem(BIN_ID_KEY, id);
+    showApp();
+  } catch(e) {
+    alert('No se pudo crear. Verificá tu conexión a internet.');
+    btn.textContent = '✨ Crear nuevo espacio compartido';
+    btn.disabled = false;
+  }
+}
+
+async function connectExistingBin() {
+  const id = document.getElementById('binIdInput').value.trim();
+  if (!id) { alert('Pegá el ID primero'); return; }
+  showLoading();
+  try {
+    const data = await readBin(id);
+    state = sanitizeState(data);
+    binId = id;
+    localStorage.setItem(BIN_ID_KEY, id);
+    showApp();
+  } catch(e) {
+    showSetup();
+    alert('No se encontró ese ID. Verificá que esté bien escrito.');
+  }
+}
+
+function showSetup() {
+  document.getElementById('setupScreen').classList.remove('hidden');
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('appContent').classList.add('hidden');
+  setSyncStatus('', 'Sin conectar');
+}
+
+function showLoading() {
+  document.getElementById('setupScreen').classList.add('hidden');
+  document.getElementById('loadingScreen').classList.remove('hidden');
+  document.getElementById('appContent').classList.add('hidden');
+  setSyncStatus('syncing', 'Conectando...');
+}
+
+function showApp() {
+  document.getElementById('setupScreen').classList.add('hidden');
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('appContent').classList.remove('hidden');
+  document.getElementById('sharedIdDisplay').textContent = binId;
+  setSyncStatus('ok', 'Conectado y sincronizado ✓');
+
+  // Actualizar URL con el ID para que sea compartible
+  const url = new URL(window.location.href);
+  url.searchParams.set('id', binId);
+  window.history.replaceState({}, '', url.toString());
+
+  renderAll();
+  renderRefTable();
+}
+
+function copyShareLink() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('id', binId);
+  navigator.clipboard.writeText(url.toString()).then(() => {
+    showToast('¡Link copiado! Mandáselo a tu marido 🔗');
+  }).catch(() => {
+    prompt('Copiá este link:', url.toString());
+  });
+}
+
+// ============================================================
+// CALCULATIONS
+// ============================================================
+function getSharedDayPoints(day) {
+  const shared = (state.days[day] && state.days[day].shared) || {};
+  return SHARED_TASKS.filter(t => shared[t.id]).reduce((sum, t) => sum + t.pts, 0);
+}
+
+function getSharedWeekPoints() {
+  return DAYS.reduce((sum, d) => sum + getSharedDayPoints(d), 0);
+}
+
+function getDayPoints(girlId, day) {
+  const girl = GIRLS.find(g => g.id === girlId);
+  const pi = girl ? girl.ptsIndex : 0;
+  const d = state.days[day][girlId];
+  if (!d) return 0;
+  let pts = 0;
+  Object.entries(d.tasks || {}).forEach(([tid, done]) => {
+    if (done) {
+      CATEGORIES.forEach(cat => {
+        const t = cat.tasks.find(t => t.id === tid);
+        if (t) pts += Array.isArray(t.pts) ? t.pts[pi] : t.pts;
+      });
+    }
+  });
+  Object.entries(d.negatives || {}).forEach(([nid, count]) => {
+    const n = NEGATIVES.find(n => n.id === nid);
+    if (n) pts += (Array.isArray(n.pts) ? n.pts[pi] : n.pts) * count;
+  });
+  return Math.max(0, pts);
+}
+
+function getWeekPoints(girlId) {
+  const individual = DAYS.reduce((sum, d) => sum + getDayPoints(girlId, d), 0);
+  const sharedHalf = Math.ceil(getSharedWeekPoints() / 2);
+  return individual + sharedHalf;
+}
+
+function pointsToMoney(pts) {
+  return Math.round((Math.min(pts, MAX_POINTS) / MAX_POINTS) * 10000);
+}
+
+function hasDayData(day) {
+  return GIRLS.some(g => {
+    const d = state.days[day][g.id];
+    return Object.values(d.tasks || {}).some(v => v) ||
+           Object.values(d.negatives || {}).some(v => v > 0);
+  }) || Object.values(state.days[day].shared || {}).some(v => v);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll() {
+  renderDaySelector();
+  renderGirls();
+  renderShared();
+  renderSummary();
+}
+
+function renderDaySelector() {
+  document.getElementById('daySelector').innerHTML = DAYS.map(d => `
+    <button class="day-btn ${d === state.currentDay ? 'active' : ''} ${hasDayData(d) ? 'has-data' : ''}"
+            onclick="selectDay('${d}')">${d}</button>
+  `).join('');
+}
+
+function renderGirls() {
+  document.getElementById('girlsGrid').innerHTML = GIRLS.map((g, i) => {
+    const day = state.currentDay;
+    const dayPts = getDayPoints(g.id, day);
+    const weekPts = getWeekPoints(g.id);
+    const pct = Math.min(100, Math.round((weekPts / MAX_POINTS) * 100));
+    const money = pointsToMoney(weekPts);
+    const d = state.days[day][g.id];
+
+    const tasksHtml = CATEGORIES.map(cat => `
+      <div class="category-title">${cat.label}</div>
+      ${cat.tasks.map(t => {
+        const done = !!(d.tasks && d.tasks[t.id]);
+        const tpts = Array.isArray(t.pts) ? t.pts[g.ptsIndex] : t.pts;
+        return `<div class="task-item ${done ? 'done' : ''}" onclick="toggleTask('${g.id}','${t.id}','${day}')">
+          <div class="task-left">
+            <div class="task-check">${done ? '✓' : ''}</div>
+            <span class="task-name">${t.name}</span>
+          </div>
+          <span class="task-pts">+${tpts} pts</span>
+        </div>`;
+      }).join('')}
+    `).join('');
+
+    const negsHtml = `
+      <div class="category-title">⛔ Puntos negativos</div>
+      ${NEGATIVES.map(n => {
+        const count = (d.negatives && d.negatives[n.id]) || 0;
+        const npts = Array.isArray(n.pts) ? n.pts[g.ptsIndex] : n.pts;
+        return `<div class="task-item negative">
+          <div class="task-left" style="flex:1"><span class="task-name">${n.name}</span></div>
+          <div class="neg-counter">
+            <button class="neg-btn minus" onclick="changeNeg('${g.id}','${n.id}','${day}',-1);event.stopPropagation()">−</button>
+            <span class="neg-count">${count}</span>
+            <button class="neg-btn plus" onclick="changeNeg('${g.id}','${n.id}','${day}',1);event.stopPropagation()">+</button>
+            <span class="task-pts negative">${npts} pts</span>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+
+    return `<div class="girl-panel ${i === 1 ? 'girl-2' : ''}">
+      <div class="girl-header">
+        <div class="girl-emoji">${g.emoji}</div>
+        <div>
+          <div class="girl-name">${g.name}</div>
+          <div class="girl-age">${g.age}</div>
+        </div>
+      </div>
+      <div class="score-display">
+        <div>
+          <div class="score-label">HOY (${day})</div>
+          <div class="score-number">${dayPts}</div>
+          <div style="font-size:0.72rem;color:var(--text-light);font-weight:600">puntos hoy</div>
+        </div>
+        <div style="text-align:right">
+          <div class="score-label">SEMANA</div>
+          <div class="score-number">${weekPts}/${MAX_POINTS}</div>
+          <div class="score-money">≈ $${money.toLocaleString('es-AR')}</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+      <div style="text-align:right;font-size:0.72rem;color:var(--text-light);margin-top:4px;margin-bottom:2px">${pct}% de la semana</div>
+      ${tasksHtml}
+      ${negsHtml}
+    </div>`;
+  }).join('');
+}
+
+function renderShared() {
+  const el = document.getElementById('sharedSection');
+  if (!el) return;
+  const day = state.currentDay;
+  if (!state.days[day].shared) state.days[day].shared = {};
+  const shared = state.days[day].shared;
+  const daySharedPts = getSharedDayPoints(day);
+  const splitPts = Math.ceil(daySharedPts / 2);
+
+  el.innerHTML = `
+    <div class="shared-title">🤝 Tareas en equipo — ${day}</div>
+    <div class="shared-subtitle">Los puntos se dividen entre las dos automáticamente · Hoy suman <strong>${splitPts} pts c/u</strong></div>
+    ${SHARED_TASKS.map(t => {
+      const done = !!shared[t.id];
+      const each = Math.ceil(t.pts / 2);
+      return `<div class="shared-task-item ${done ? 'done' : ''}" onclick="toggleShared('${t.id}','${day}')">
+        <div class="task-left">
+          <div class="task-check" style="border-color:${done ? 'var(--verde)' : '#FFD60A'};${done ? 'background:var(--verde);color:white' : ''}">${done ? '✓' : ''}</div>
+          <span class="task-name">${t.name}</span>
+        </div>
+        <div class="shared-pts-pill">
+          <span class="split-badge">+${each} pts c/u</span>
+          <span class="task-pts" style="color:var(--text-light);font-size:0.72rem">(${t.pts} total)</span>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function renderSummary() {
+  document.getElementById('summaryGrid').innerHTML = GIRLS.map((g, i) => {
+    const pts = getWeekPoints(g.id);
+    const money = pointsToMoney(pts);
+    const pct = Math.min(100, Math.round((pts / MAX_POINTS) * 100));
+    return `<div class="summary-card ${i === 0 ? 'girl-1-card' : 'girl-2-card'}">
+      <div style="font-size:1.8rem">${g.emoji}</div>
+      <div class="summary-name" style="color:var(--${g.color})">${g.name}</div>
+      <div class="summary-pts ${g.color}">${pts} pts</div>
+      <div class="summary-money-big">$${money.toLocaleString('es-AR')}</div>
+      <div class="summary-pct">${pct}% del máximo</div>
+      <div style="margin-top:8px"><div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderRefTable() {
+  const el = document.getElementById('refTable');
+  let rows = `<tr><th>Tarea</th><th>Categoría</th><th>Nao (11)</th><th>Chiara (6)</th></tr>`;
+  CATEGORIES.forEach(cat => {
+    cat.tasks.forEach(t => {
+      const p0 = Array.isArray(t.pts) ? t.pts[0] : t.pts;
+      const p1 = Array.isArray(t.pts) ? t.pts[1] : t.pts;
+      rows += `<tr><td>${t.name}</td><td><span class="cat-badge ${cat.badge}">${cat.badgeText}</span></td><td><span class="pts-badge pts-pos">+${p0}</span></td><td><span class="pts-badge pts-pos">+${p1}</span></td></tr>`;
+    });
+  });
+  NEGATIVES.forEach(n => {
+    const p0 = Array.isArray(n.pts) ? n.pts[0] : n.pts;
+    const p1 = Array.isArray(n.pts) ? n.pts[1] : n.pts;
+    rows += `<tr><td>${n.name}</td><td><span class="cat-badge cat-neg">NEGATIVO</span></td><td><span class="pts-badge pts-neg">${p0}</span></td><td><span class="pts-badge pts-neg">${p1}</span></td></tr>`;
+  });
+  rows += `<tr style="background:#F9FAFB"><td colspan="2" style="font-weight:800">TOTAL MÁXIMO SEMANAL</td><td colspan="2"><span class="pts-badge pts-pos">200 pts = $10.000</span></td></tr>`;
+  el.innerHTML = rows;
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function selectDay(day) {
+  state.currentDay = day;
+  scheduleSave();
+  renderAll();
+}
+
+function toggleTask(girlId, taskId, day) {
+  const girl = GIRLS.find(g => g.id === girlId);
+  const pi = girl ? girl.ptsIndex : 0;
+  const d = state.days[day][girlId];
+  if (!d.tasks) d.tasks = {};
+  const wasDone = !!d.tasks[taskId];
+  d.tasks[taskId] = !wasDone;
+  scheduleSave();
+  if (!wasDone) {
+    const allTasks = CATEGORIES.flatMap(c => c.tasks);
+    const t = allTasks.find(t => t.id === taskId);
+    const tpts = t ? (Array.isArray(t.pts) ? t.pts[pi] : t.pts) : 0;
+    showToast(`+${tpts} puntos ✨`);
+    spawnConfetti();
+  }
+  renderAll();
+}
+
+function changeNeg(girlId, negId, day, delta) {
+  const d = state.days[day][girlId];
+  if (!d.negatives) d.negatives = {};
+  d.negatives[negId] = Math.max(0, (d.negatives[negId] || 0) + delta);
+  scheduleSave();
+  if (delta > 0) {
+    const n = NEGATIVES.find(n => n.id === negId);
+    const girl = GIRLS.find(g => g.id === girlId);
+    const npts = n ? (Array.isArray(n.pts) ? n.pts[girl.ptsIndex] : n.pts) : 0;
+    showToast(`${npts} puntos ⛔`);
+  }
+  renderAll();
+}
+
+function toggleShared(taskId, day) {
+  if (!state.days[day].shared) state.days[day].shared = {};
+  const wasDone = !!state.days[day].shared[taskId];
+  state.days[day].shared[taskId] = !wasDone;
+  scheduleSave();
+  if (!wasDone) {
+    const t = SHARED_TASKS.find(t => t.id === taskId);
+    const each = t ? Math.ceil(t.pts / 2) : 0;
+    showToast(`+${each} pts para cada una 🤝`);
+    spawnConfetti();
+  }
+  renderAll();
+}
+
+function confirmReset() {
+  if (confirm('¿Empezar nueva semana? Se borrarán todos los puntos.')) {
+    state = defaultState();
+    scheduleSave();
+    renderAll();
+    renderRefTable();
+    showToast('¡Nueva semana comenzada! 🌟');
+  }
+}
+
+// ============================================================
+// FX
+// ============================================================
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function spawnConfetti() {
+  const emojis = ['⭐','🌟','✨','🎉','💫','🏅'];
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-pop';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (30 + Math.random() * 40) + '%';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 900);
+    }, i * 150);
+  }
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
