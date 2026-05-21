@@ -316,11 +316,11 @@ var SHARED_TASKS = [
 ];
 
 // ============================================================
-// CLOUD SYNC — JSONBin (funciona desde GitHub Pages)
+// CLOUD SYNC — Firebase Realtime Database (gratis, sin CORS)
+// Base de datos pública dedicada para esta app
 // ============================================================
-var BLOB_URL = 'https://api.jsonbin.io/v3';
-var BIN_KEY = 'puntos_bin_v4';
-var API_KEY = '$2a$10$mLgQ3G7a5KZvN8xP2wYtOeJ4hR6bT1cV9dF0iU7oE3qS5nA8kW2yX';
+var FB_URL = 'https://puntos-semana-default-rtdb.firebaseio.com';
+var BIN_KEY = 'puntos_fb_id_v1';
 var binId = null;
 var state = null;
 var saveTimer = null;
@@ -334,37 +334,39 @@ function setSyncStatus(s, msg) {
 function show(id) { document.getElementById(id).classList.remove('hidden'); }
 function hide(id) { document.getElementById(id).classList.add('hidden'); }
 
-// Usamos jsonblob.com — sin API key, sin CORS issues desde GitHub Pages
-var JSONBLOB = 'https://jsonblob.com/api/jsonBlob';
+function makeId() {
+  var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  var id = '';
+  for (var i = 0; i < 16; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
 
 async function apiCreate(data) {
-  var res = await fetch(JSONBLOB, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+  var id = makeId();
+  var res = await fetch(FB_URL + '/semanas/' + id + '.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
-  if (!res.ok) throw new Error('create failed');
-  var loc = res.headers.get('Location') || '';
-  var id = loc.split('/').pop();
-  if (!id) throw new Error('no id');
+  if (!res.ok) throw new Error('create failed ' + res.status);
   return id;
 }
 
 async function apiRead(id) {
-  var res = await fetch(JSONBLOB + '/' + id, {
-    headers: { 'Accept': 'application/json' }
-  });
-  if (!res.ok) throw new Error('read failed');
-  return await res.json();
+  var res = await fetch(FB_URL + '/semanas/' + id + '.json');
+  if (!res.ok) throw new Error('read failed ' + res.status);
+  var data = await res.json();
+  if (!data) throw new Error('empty');
+  return data;
 }
 
 async function apiWrite(id, data) {
-  var res = await fetch(JSONBLOB + '/' + id, {
+  var res = await fetch(FB_URL + '/semanas/' + id + '.json', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
-  if (!res.ok) throw new Error('write failed');
+  if (!res.ok) throw new Error('write failed ' + res.status);
 }
 
 function scheduleSave() {
