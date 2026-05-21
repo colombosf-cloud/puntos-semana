@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⭐ La Gran Semana</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rosa:#FF6B9D; --lila:#A855F7; --amarillo:#FFD60A;
+    --verde:#22C55E; --rojo:#EF4444; --celeste:#38BDF8;
+    --bg:#FFF8F0; --card:#FFFFFF; --text:#1E1B4B; --text-light:#6B7280;
+    --shadow:0 4px 20px rgba(0,0,0,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+    background-image:radial-gradient(circle at 10% 20%,rgba(255,107,157,0.08) 0%,transparent 50%),
+                     radial-gradient(circle at 90% 80%,rgba(168,85,247,0.08) 0%,transparent 50%);
+    min-height:100vh;padding:16px;}
+  h1,.score-number{font-family:'Baloo 2',cursive;}
+
+  /* HEADER */
+  .header{text-align:center;padding:16px 0 8px;}
+  .header h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--rosa),var(--lila));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;}
+  .header .subtitle{font-size:0.9rem;color:var(--text-light);margin-top:4px;}
+  .stars-deco{font-size:1.4rem;letter-spacing:4px;margin-bottom:4px;}
+
+  /* SYNC */
+  .sync-bar{max-width:1000px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:0.75rem;font-weight:700;color:var(--text-light);}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:#D1D5DB;transition:background 0.3s;flex-shrink:0;}
+  .sync-dot.syncing{background:var(--amarillo);animation:pulse 1s infinite;}
+  .sync-dot.ok{background:var(--verde);}
+  .sync-dot.error{background:var(--rojo);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  /* SETUP */
+  .setup-screen{max-width:460px;margin:40px auto;background:var(--card);border-radius:24px;padding:28px;box-shadow:var(--shadow);text-align:center;}
+  .setup-screen h2{font-size:1.3rem;font-weight:800;margin-bottom:8px;}
+  .setup-screen p{font-size:0.85rem;color:var(--text-light);margin-bottom:20px;line-height:1.5;}
+  .setup-btn{display:block;width:100%;padding:13px;background:linear-gradient(135deg,var(--rosa),var(--lila));color:white;border:none;border-radius:14px;font-family:'Baloo 2',cursive;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;transition:transform 0.15s;}
+  .setup-btn:hover{transform:translateY(-2px);}
+  .setup-btn:disabled{opacity:0.6;transform:none;cursor:not-allowed;}
+  .setup-btn.sec{background:none;border:2px solid #E5E7EB;color:var(--text-light);font-size:0.85rem;font-family:'Nunito',sans-serif;padding:10px;}
+  .setup-input{width:100%;padding:11px 14px;border:2px solid #E5E7EB;border-radius:12px;font-family:'Nunito',sans-serif;font-size:0.88rem;margin-bottom:8px;outline:none;transition:border-color 0.2s;}
+  .setup-input:focus{border-color:var(--lila);}
+  .setup-divider{font-size:0.75rem;color:var(--text-light);margin:10px 0;}
+
+  /* LOADING */
+  .loading-screen{text-align:center;padding:60px 20px;font-size:1rem;color:var(--text-light);font-weight:700;}
+  .spinner{width:36px;height:36px;border:4px solid #E5E7EB;border-top-color:var(--lila);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* SHARE BAR */
+  .share-bar{max-width:1000px;margin:0 auto 12px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:14px;padding:9px 14px;font-size:0.75rem;color:#15803D;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .share-id{font-family:monospace;background:white;padding:2px 6px;border-radius:6px;border:1px solid #86EFAC;font-size:0.72rem;word-break:break-all;}
+  .copy-btn{margin-left:auto;background:#22C55E;color:white;border:none;border-radius:8px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+  /* DAY SELECTOR */
+  .day-selector{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 auto 14px;max-width:1000px;}
+  .day-btn{background:white;border:2px solid #E5E7EB;border-radius:10px;padding:7px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer;transition:all 0.2s;color:var(--text-light);}
+  .day-btn.active{background:linear-gradient(135deg,var(--rosa),var(--lila));border-color:transparent;color:white;transform:translateY(-2px);box-shadow:0 4px 12px rgba(168,85,247,0.3);}
+  .day-btn.has-data::after{content:' ✓';font-size:0.68rem;}
+
+  /* GIRLS GRID */
+  .girls-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1000px;margin:0 auto 14px;}
+  @media(max-width:680px){.girls-grid{grid-template-columns:1fr;}}
+
+  /* GIRL PANEL */
+  .girl-panel{background:var(--card);border-radius:22px;box-shadow:var(--shadow);border-top:5px solid var(--rosa);overflow:hidden;}
+  .girl-panel.girl-2{border-top-color:var(--lila);}
+
+  .girl-panel-header{display:flex;align-items:center;padding:16px 18px 12px;cursor:pointer;user-select:none;position:relative;}
+  .girl-panel-header::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:0 0 0 80%;opacity:0.07;}
+  .girl-panel:first-child .girl-panel-header::before{background:var(--rosa);}
+  .girl-panel.girl-2 .girl-panel-header::before{background:var(--lila);}
+
+  .girl-emoji{font-size:2rem;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(255,107,157,0.1);border-radius:14px;flex-shrink:0;}
+  .girl-2 .girl-emoji{background:rgba(168,85,247,0.1);}
+  .girl-name{font-size:1.2rem;font-weight:800;color:var(--rosa);}
+  .girl-2 .girl-name{color:var(--lila);}
+  .girl-age{font-size:0.75rem;color:var(--text-light);font-weight:600;}
+  .girl-header-info{flex:1;margin-left:12px;}
+  .girl-header-score{text-align:right;margin-right:10px;}
+  .girl-header-pts{font-family:'Baloo 2',cursive;font-size:1.4rem;font-weight:800;color:var(--rosa);line-height:1;}
+  .girl-2 .girl-header-pts{color:var(--lila);}
+  .girl-header-money{font-size:0.75rem;font-weight:700;color:var(--verde);}
+
+  .chevron{font-size:1rem;color:var(--text-light);transition:transform 0.3s;flex-shrink:0;}
+  .chevron.open{transform:rotate(180deg);}
+
+  .girl-panel-body{padding:0 18px 16px;overflow:hidden;transition:max-height 0.35s ease, opacity 0.3s ease;max-height:2000px;opacity:1;}
+  .girl-panel-body.collapsed{max-height:0;opacity:0;padding-bottom:0;}
+
+  .score-display{background:linear-gradient(135deg,rgba(255,107,157,0.1),rgba(255,107,157,0.05));border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .girl-2 .score-display{background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(168,85,247,0.05));}
+  .score-label{font-size:0.75rem;color:var(--text-light);font-weight:700;}
+  .score-number{font-size:1.8rem;font-weight:800;color:var(--rosa);line-height:1;}
+  .girl-2 .score-number{color:var(--lila);}
+  .score-money{font-size:0.82rem;font-weight:700;color:var(--verde);}
+  .progress-bar-wrap{background:rgba(0,0,0,0.06);border-radius:20px;height:7px;overflow:hidden;}
+  .progress-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--rosa),var(--lila));transition:width 0.5s ease;}
+  .girl-2 .progress-bar{background:linear-gradient(90deg,var(--lila),var(--celeste));}
+
+  .category-title{font-size:0.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-light);margin:10px 0 5px;}
+
+  /* TASK ITEMS */
+  .task-item{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;border-radius:9px;margin-bottom:3px;cursor:pointer;transition:all 0.15s;border:1.5px solid transparent;background:rgba(0,0,0,0.02);}
+  .task-item:hover{background:rgba(0,0,0,0.05);}
+  .task-item.negative{cursor:default;}
+  .task-left{display:flex;align-items:center;gap:7px;flex:1;}
+  .task-name{font-size:0.8rem;font-weight:600;color:var(--text);line-height:1.3;}
+  .task-pts{font-size:0.78rem;font-weight:800;color:var(--verde);white-space:nowrap;margin-left:4px;}
+  .task-pts.neg-pts{color:var(--rojo);}
+
+  /* COUNTER TASK (doble: mañana + noche) */
+  .task-counter{display:flex;align-items:center;gap:4px;}
+  .tc-btn{width:24px;height:24px;border-radius:7px;border:none;cursor:pointer;font-size:0.85rem;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+  .tc-btn.minus{background:rgba(239,68,68,0.12);color:var(--rojo);}
+  .tc-btn.plus{background:rgba(34,197,94,0.15);color:var(--verde);}
+  .tc-btn:hover{transform:scale(1.15);}
+  .tc-count{font-size:0.85rem;font-weight:800;min-width:16px;text-align:center;}
+  .tc-max{font-size:0.68rem;color:var(--text-light);font-weight:600;}
+
+  /* colores según estado del counter */
+  .task-item.done-partial{background:rgba(34,197,94,0.05);border-color:rgba(34,197,94,0.2);}
+  .task-item.done-full{background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.35);}
+
+  /* NEG COUNTER */
+  .neg-counter{display:flex;align-items:center;gap:5px;}
+  .neg-btn{width:24px;height:24px;border-radius:7px;border:none;cursor:pointer;font-size:0.85rem;font-weight:800;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,0.15);color:var(--rojo);transition:all 0.15s;}
+  .neg-btn:hover{transform:scale(1.15);}
+  .neg-count{font-size:0.82rem;font-weight:800;min-width:18px;text-align:center;color:var(--rojo);}
+
+  /* SHARED */
+  .shared-section{max-width:1000px;margin:0 auto 14px;background:var(--card);border-radius:22px;padding:16px 18px;box-shadow:var(--shadow);border-top:5px solid var(--amarillo);}
+  .shared-title{font-size:0.95rem;font-weight:800;margin-bottom:3px;}
+  .shared-subtitle{font-size:0.75rem;color:var(--text-light);margin-bottom:10px;}
+  .shared-task-item{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:9px;margin-bottom:3px;border:1.5px solid transparent;background:rgba(0,0,0,0.02);cursor:pointer;transition:all 0.15s;}
+  .shared-task-item:hover{background:rgba(255,214,10,0.06);}
+  .shared-task-item.done{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.3);}
+  .task-check{width:20px;height:20px;border-radius:6px;border:2px solid #D1D5DB;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.68rem;transition:all 0.15s;}
+  .shared-task-item.done .task-check{background:var(--verde);border-color:var(--verde);color:white;}
+  .split-badge{font-size:0.68rem;font-weight:700;background:rgba(255,214,10,0.25);color:#92400E;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+  .shared-task-item.done .split-badge{background:rgba(34,197,94,0.2);color:#15803D;}
+
+  /* SUMMARY */
+  .summary-section{max-width:1000px;margin:0 auto 20px;background:var(--card);border-radius:22px;padding:18px;box-shadow:var(--shadow);}
+  .summary-title{font-size:1rem;font-weight:800;margin-bottom:12px;}
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .summary-card{border-radius:14px;padding:12px;text-align:center;}
+  .summary-card.c1{background:linear-gradient(135deg,rgba(255,107,157,0.1),rgba(255,107,157,0.05));border:1.5px solid rgba(255,107,157,0.2);}
+  .summary-card.c2{background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(168,85,247,0.05));border:1.5px solid rgba(168,85,247,0.2);}
+  .summary-pts{font-size:1.7rem;font-weight:800;font-family:'Baloo 2',cursive;line-height:1;}
+  .summary-pts.rosa{color:var(--rosa);}
+  .summary-pts.lila{color:var(--lila);}
+  .summary-money{font-size:1rem;font-weight:800;color:var(--verde);margin-top:3px;}
+  .summary-pct{font-size:0.72rem;color:var(--text-light);margin-top:2px;}
+
+  /* REF */
+  .ref-section{max-width:1000px;margin:0 auto 20px;background:var(--card);border-radius:22px;padding:18px;box-shadow:var(--shadow);}
+  details summary{cursor:pointer;user-select:none;font-size:0.95rem;font-weight:800;}
+  .ref-table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-top:10px;}
+  .ref-table th{text-align:left;padding:7px 9px;font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-light);border-bottom:2px solid #F3F4F6;}
+  .ref-table td{padding:6px 9px;border-bottom:1px solid #F9FAFB;}
+  .cat-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:0.68rem;font-weight:700;}
+  .cat-1{background:rgba(56,189,248,0.15);color:#0369A1;}
+  .cat-2{background:rgba(34,197,94,0.15);color:#15803D;}
+  .cat-3{background:rgba(249,115,22,0.15);color:#C2410C;}
+  .cat-4{background:rgba(168,85,247,0.15);color:#7E22CE;}
+  .cat-5{background:rgba(255,214,10,0.2);color:#92400E;}
+  .cat-neg{background:rgba(239,68,68,0.12);color:#B91C1C;}
+  .pts-badge{font-weight:800;font-family:'Baloo 2',cursive;}
+  .pts-pos{color:var(--verde);}
+  .pts-neg{color:var(--rojo);}
+
+  .reset-btn{display:block;margin:12px auto 0;background:none;border:1.5px solid #E5E7EB;border-radius:10px;padding:7px 18px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.78rem;color:var(--text-light);cursor:pointer;transition:all 0.2s;}
+  .reset-btn:hover{border-color:var(--rojo);color:var(--rojo);}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1E1B4B;color:white;padding:9px 18px;border-radius:50px;font-size:0.82rem;font-weight:700;transition:transform 0.3s;pointer-events:none;z-index:999;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .confetti-pop{position:fixed;top:50%;left:50%;font-size:2rem;pointer-events:none;animation:pop 0.8s ease-out forwards;z-index:999;}
+  @keyframes pop{0%{transform:translate(-50%,-50%) scale(0);opacity:1;}60%{transform:translate(-50%,-80px) scale(1.4);opacity:1;}100%{transform:translate(-50%,-150px) scale(1);opacity:0;}}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="stars-deco">⭐✨🌟</div>
+  <h1>La Gran Semana</h1>
+  <p class="subtitle">Sumá puntos cada día — ¡el domingo ves tu premio! 💰</p>
+</div>
+
+<div class="sync-bar"><div class="sync-dot" id="syncDot"></div><span id="syncMsg">Conectando...</span></div>
+
+<!-- SETUP -->
+<div class="setup-screen hidden" id="setupScreen">
+  <div style="font-size:2.5rem;margin-bottom:10px">🔗</div>
+  <h2>Configurar acceso compartido</h2>
+  <p>La primera vez creás el espacio. Después compartís el link y los dos ven los mismos datos.</p>
+  <button class="setup-btn" id="createBtn" onclick="createNew()">✨ Crear nuevo espacio</button>
+  <div class="setup-divider">— o si ya tenés uno —</div>
+  <input class="setup-input" type="text" id="binInput" placeholder="Pegá tu ID...">
+  <button class="setup-btn sec" onclick="connectExisting()">Conectarme a uno existente</button>
+</div>
+
+<!-- LOADING -->
+<div class="loading-screen hidden" id="loadingScreen">
+  <div class="spinner"></div>Cargando...
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <div class="share-bar">
+    <span>🔗 ID:</span>
+    <span class="share-id" id="shareIdDisplay"></span>
+    <button class="copy-btn" onclick="copyLink()">Copiar link 📋</button>
+  </div>
+  <div class="day-selector" id="daySelector"></div>
+  <div class="girls-grid" id="girlsGrid"></div>
+  <div class="shared-section" id="sharedSection"></div>
+  <div class="summary-section">
+    <div class="summary-title">📊 Resumen de la semana</div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <button class="reset-btn" onclick="confirmReset()">🔄 Nueva semana</button>
+  </div>
+  <div class="ref-section">
+    <details>
+      <summary>📋 Tabla de referencia</summary>
+      <table class="ref-table" id="refTable"></table>
+    </details>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+var MAX_POINTS = 200;
+
+var GIRLS = [
+  { id:'g1', name:'Nao',    age:'11 años', emoji:'🌟', color:'rosa', pi:0 },
+  { id:'g2', name:'Chiara', age:'6 años',  emoji:'🌸', color:'lila', pi:1 }
+];
+
+var DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+
+// type: 'single' = tilde simple | 'double' = contador 0/1/2 (mañana y noche)
+var CATEGORIES = [
+  { id:'propias', label:'🪥 Cosas propias', badge:'cat-1', badgeText:'PROPIAS', tasks:[
+    { id:'levantarse',    name:'Levantarse temprano sola',      pts:[1,1],  type:'single' },
+    { id:'dientes',       name:'Cepillarse los dientes',        pts:[1,1],  type:'double', maxLabel:'× 2 (mañana y noche)' },
+    { id:'cambiarse',     name:'Cambiarse sola',                pts:[1,1],  type:'single' },
+    { id:'deberes',       name:'Hacer los deberes sola',        pts:[3,3],  type:'single' },
+    { id:'banarse',       name:'Bañarse sola',                  pts:[2,2],  type:'single' },
+    { id:'ordenar_cosas', name:'Ordenar sus cosas',             pts:[1,1],  type:'single' },
+    { id:'hacer_cama',    name:'Hacer la cama',                 pts:[2,2],  type:'single' },
+    { id:'acostar',       name:'Acostarse antes de las 11 pm',  pts:[1,1],  type:'single' },
+    { id:'leer',          name:'Leer 15 min (libro)',           pts:[3,3],  type:'single' }
+  ]},
+  { id:'casa_simple', label:'🍽️ Casa — nivel fácil', badge:'cat-2', badgeText:'FÁCIL', tasks:[
+    { id:'poner_mesa',      name:'Poner la mesa',                  pts:[2,2], type:'double', maxLabel:'× 2 (mediodía y noche)' },
+    { id:'sacar_mesa',      name:'Sacar la mesa',                  pts:[1,1], type:'double', maxLabel:'× 2 (mediodía y noche)' },
+    { id:'ordenar_mesa',    name:'Ordenar la mesa',                pts:[1,1], type:'single' },
+    { id:'ordenar_casa',    name:'Ordenar la casa (zona)',         pts:[2,2], type:'single' },
+    { id:'ordenar_cuarto',  name:'Ordenar la habitación',          pts:[2,2], type:'single' },
+    { id:'gata',            name:'Darle de comer a Mía (la gata)', pts:[2,2], type:'single' },
+    { id:'molly_comida',    name:'Darle de comer a Molly',         pts:[2,2], type:'single' },
+    { id:'agua',            name:'Llenar las botellas de agua',    pts:[1,1], type:'single' },
+    { id:'caja_mia',        name:'Limpiar la caja de Mía',         pts:[4,4], type:'single' },
+    { id:'guardar_vajilla', name:'Guardar vajilla seca',           pts:[2,2], type:'single' }
+  ]},
+  { id:'casa_media', label:'🧹 Casa — nivel medio', badge:'cat-3', badgeText:'MEDIO', tasks:[
+    { id:'barrer',          name:'Barrer la casa',          pts:[4,4], type:'single' },
+    { id:'lavar_platos',    name:'Lavar los platos',        pts:[4,4], type:'single' },
+    { id:'lavar_ropa',      name:'Lavar ropa',              pts:[4,4], type:'single' },
+    { id:'colgar_ropa',     name:'Colgar ropa',             pts:[3,3], type:'single' },
+    { id:'doblar_ropa',     name:'Doblar y guardar ropa',   pts:[4,4], type:'single' },
+    { id:'regar',           name:'Regar las plantas',       pts:[2,2], type:'single' },
+    { id:'limpiar_muebles', name:'Limpiar los muebles',     pts:[3,3], type:'single' }
+  ]},
+  { id:'experto', label:'🧽 Nivel experto', badge:'cat-4', badgeText:'EXPERTO', tasks:[
+    { id:'microondas', name:'Limpiar el microondas',               pts:[6,6],   type:'single' },
+    { id:'cocina',     name:'Limpiar la cocina',                   pts:[8,8],   type:'single' },
+    { id:'horno',      name:'Limpiar el horno',                    pts:[8,8],   type:'single' },
+    { id:'banio',      name:'Limpiar baño (inodoro/ducha/pileta)', pts:[10,10], type:'single' },
+    { id:'telaranias', name:'Sacar telarañas',                     pts:[5,5],   type:'single' }
+  ]},
+  { id:'maximo', label:'🏆 Nivel MÁXIMO', badge:'cat-5', badgeText:'MÁXIMO', tasks:[
+    { id:'caca_molly', name:'💩 Levantar caca de Molly', pts:[10,10], type:'single' }
+  ]}
+];
+
+var NEGATIVES = [
+  { id:'pelear',         name:'Pelearse con la hermana',    pts:[-2,-2] },
+  { id:'pegar',          name:'Pegar',                      pts:[-4,-3] },
+  { id:'romper_cosas',   name:'Romper cosas de la hermana', pts:[-4,-3] },
+  { id:'desobedecer',    name:'Desobedecer a mamá/papá',    pts:[-3,-2] },
+  { id:'mentir',         name:'Mentir',                     pts:[-2,-2] },
+  { id:'rabieta',        name:'Rabieta / berrinche',        pts:[-1,-1] },
+  { id:'malas_palabras', name:'Decir malas palabras',       pts:[-2,-1] }
+];
+
+var SHARED_TASKS = [
+  { id:'sh_limpiar_casa',   name:'Limpiar la casa juntas',          pts:14 },
+  { id:'sh_lavar_platos',   name:'Lavar y secar los platos juntas', pts:10 },
+  { id:'sh_barrer',         name:'Barrer toda la casa juntas',      pts:10 },
+  { id:'sh_doblar_ropa',    name:'Doblar y guardar ropa juntas',    pts:10 },
+  { id:'sh_ordenar_cuarto', name:'Ordenar el cuarto de las dos',    pts:8  },
+  { id:'sh_regar',          name:'Regar todas las plantas juntas',  pts:6  },
+  { id:'sh_molly_mia',      name:'Cuidar a Molly y Mía juntas',     pts:6  },
+  { id:'sh_cocina',         name:'Limpiar la cocina juntas',        pts:18 },
+  { id:'sh_banio',          name:'Limpiar el baño juntas',          pts:20 }
+];
+
+// ============================================================
+// CLOUD SYNC — Firebase Realtime Database (gratis, sin CORS)
+// Base de datos pública dedicada para esta app
+// ============================================================
+var FB_URL = 'https://puntos-semana-default-rtdb.firebaseio.com';
+var BIN_KEY = 'puntos_fb_id_v1';
+var binId = null;
+var state = null;
+var saveTimer = null;
+var collapsed = {};
+
+function setSyncStatus(s, msg) {
+  document.getElementById('syncDot').className = 'sync-dot ' + s;
+  document.getElementById('syncMsg').textContent = msg;
+}
+
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+function makeId() {
+  var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  var id = '';
+  for (var i = 0; i < 16; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
+async function apiCreate(data) {
+  var id = makeId();
+  var res = await fetch(FB_URL + '/semanas/' + id + '.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('create failed ' + res.status);
+  return id;
+}
+
+async function apiRead(id) {
+  var res = await fetch(FB_URL + '/semanas/' + id + '.json');
+  if (!res.ok) throw new Error('read failed ' + res.status);
+  var data = await res.json();
+  if (!data) throw new Error('empty');
+  return data;
+}
+
+async function apiWrite(id, data) {
+  var res = await fetch(FB_URL + '/semanas/' + id + '.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('write failed ' + res.status);
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  setSyncStatus('syncing', 'Guardando...');
+  saveTimer = setTimeout(async function() {
+    try {
+      await apiWrite(binId, state);
+      setSyncStatus('ok', 'Guardado ✓');
+    } catch(e) {
+      setSyncStatus('error', 'Error — reintentando...');
+      setTimeout(async function() {
+        try { await apiWrite(binId, state); setSyncStatus('ok', 'Guardado ✓'); }
+        catch(e2) { setSyncStatus('error', 'Sin conexión'); }
+      }, 3000);
+    }
+  }, 600);
+  // Render INMEDIATO — no espera al guardado
+  renderAll();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  var params = new URLSearchParams(window.location.search);
+  var urlId = params.get('id');
+  var storedId = localStorage.getItem(BIN_KEY);
+  binId = urlId || storedId;
+
+  if (binId) {
+    show('loadingScreen');
+    setSyncStatus('syncing', 'Conectando...');
+    try {
+      var data = await apiRead(binId);
+      state = sanitize(data);
+      localStorage.setItem(BIN_KEY, binId);
+      showApp();
+    } catch(e) {
+      binId = null;
+      localStorage.removeItem(BIN_KEY);
+      hide('loadingScreen');
+      show('setupScreen');
+      setSyncStatus('error', 'No se pudo conectar');
+    }
+  } else {
+    show('setupScreen');
+    setSyncStatus('', 'Sin conectar');
+  }
+}
+
+async function createNew() {
+  var btn = document.getElementById('createBtn');
+  btn.textContent = 'Creando...';
+  btn.disabled = true;
+  try {
+    var ns = defaultState();
+    var id = await apiCreate(ns);
+    binId = id;
+    state = ns;
+    localStorage.setItem(BIN_KEY, id);
+    showApp();
+  } catch(e) {
+    alert('No se pudo crear. Verificá tu conexión.');
+    btn.textContent = '✨ Crear nuevo espacio';
+    btn.disabled = false;
+  }
+}
+
+async function connectExisting() {
+  var id = document.getElementById('binInput').value.trim();
+  if (!id) { alert('Pegá el ID primero'); return; }
+  show('loadingScreen');
+  hide('setupScreen');
+  try {
+    var data = await apiRead(id);
+    state = sanitize(data);
+    binId = id;
+    localStorage.setItem(BIN_KEY, id);
+    showApp();
+  } catch(e) {
+    hide('loadingScreen');
+    show('setupScreen');
+    alert('No se encontró ese ID.');
+  }
+}
+
+function showApp() {
+  hide('setupScreen'); hide('loadingScreen'); show('app');
+  document.getElementById('shareIdDisplay').textContent = binId;
+  setSyncStatus('ok', 'Sincronizado ✓');
+  var url = new URL(window.location.href);
+  url.searchParams.set('id', binId);
+  window.history.replaceState({}, '', url.toString());
+  renderAll(); renderRef();
+}
+
+function copyLink() {
+  var url = new URL(window.location.href);
+  url.searchParams.set('id', binId);
+  var link = url.toString();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(function() { showToast('¡Link copiado! 🔗'); });
+  } else {
+    prompt('Copiá este link:', link);
+  }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+function defaultState() {
+  var days = {};
+  for (var di = 0; di < DAYS.length; di++) {
+    var d = DAYS[di];
+    days[d] = { shared: {} };
+    for (var gi = 0; gi < GIRLS.length; gi++) {
+      days[d][GIRLS[gi].id] = { tasks: {}, negatives: {} };
+    }
+  }
+  return { days: days, currentDay: DAYS[0] };
+}
+
+function sanitize(s) {
+  if (!s || !s.days) return defaultState();
+  for (var di = 0; di < DAYS.length; di++) {
+    var d = DAYS[di];
+    if (!s.days[d]) s.days[d] = { shared: {} };
+    if (!s.days[d].shared) s.days[d].shared = {};
+    for (var gi = 0; gi < GIRLS.length; gi++) {
+      if (!s.days[d][GIRLS[gi].id]) s.days[d][GIRLS[gi].id] = { tasks: {}, negatives: {} };
+      if (!s.days[d][GIRLS[gi].id].tasks) s.days[d][GIRLS[gi].id].tasks = {};
+      if (!s.days[d][GIRLS[gi].id].negatives) s.days[d][GIRLS[gi].id].negatives = {};
+    }
+  }
+  if (!s.currentDay) s.currentDay = DAYS[0];
+  return s;
+}
+
+// ============================================================
+// CALCULATIONS
+// ============================================================
+function getTaskPts(task, girl, count) {
+  var base = Array.isArray(task.pts) ? task.pts[girl.pi] : task.pts;
+  if (task.type === 'double') return base * (count || 0);
+  return count ? base : 0;
+}
+
+function getDayPts(girlId, day) {
+  var girl = null;
+  for (var i = 0; i < GIRLS.length; i++) { if (GIRLS[i].id === girlId) { girl = GIRLS[i]; break; } }
+  var d = state.days[day][girlId];
+  if (!d) return 0;
+  var pts = 0;
+  for (var ci = 0; ci < CATEGORIES.length; ci++) {
+    for (var ti = 0; ti < CATEGORIES[ci].tasks.length; ti++) {
+      var t = CATEGORIES[ci].tasks[ti];
+      var val = d.tasks[t.id] || 0;
+      pts += getTaskPts(t, girl, val);
+    }
+  }
+  for (var ni = 0; ni < NEGATIVES.length; ni++) {
+    var n = NEGATIVES[ni];
+    var cnt = d.negatives[n.id] || 0;
+    if (cnt > 0) {
+      var np = Array.isArray(n.pts) ? n.pts[girl.pi] : n.pts;
+      pts += np * cnt;
+    }
+  }
+  return Math.max(0, pts);
+}
+
+function getSharedDayPts(day) {
+  var sh = state.days[day].shared || {};
+  var total = 0;
+  for (var i = 0; i < SHARED_TASKS.length; i++) { if (sh[SHARED_TASKS[i].id]) total += SHARED_TASKS[i].pts; }
+  return total;
+}
+
+function getSharedWeekPts() {
+  var total = 0;
+  for (var i = 0; i < DAYS.length; i++) total += getSharedDayPts(DAYS[i]);
+  return total;
+}
+
+function getWeekPts(girlId) {
+  var total = 0;
+  for (var i = 0; i < DAYS.length; i++) total += getDayPts(girlId, DAYS[i]);
+  return total + Math.ceil(getSharedWeekPts() / 2);
+}
+
+function ptsToMoney(pts) {
+  return Math.round((Math.min(pts, MAX_POINTS) / MAX_POINTS) * 10000);
+}
+
+function hasDayData(day) {
+  for (var gi = 0; gi < GIRLS.length; gi++) {
+    var d = state.days[day][GIRLS[gi].id];
+    var tk = Object.keys(d.tasks || {});
+    for (var i = 0; i < tk.length; i++) { if (d.tasks[tk[i]]) return true; }
+    var nk = Object.keys(d.negatives || {});
+    for (var i = 0; i < nk.length; i++) { if (d.negatives[nk[i]] > 0) return true; }
+  }
+  var sh = state.days[day].shared || {};
+  var sk = Object.keys(sh);
+  for (var i = 0; i < sk.length; i++) { if (sh[sk[i]]) return true; }
+  return false;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll() { renderDays(); renderGirls(); renderShared(); renderSummary(); }
+
+function renderDays() {
+  var html = '';
+  for (var i = 0; i < DAYS.length; i++) {
+    var d = DAYS[i];
+    var cls = (d === state.currentDay ? ' active' : '') + (hasDayData(d) ? ' has-data' : '');
+    html += '<button class="day-btn' + cls + '" onclick="selectDay(\'' + d + '\')">' + d + '</button>';
+  }
+  document.getElementById('daySelector').innerHTML = html;
+}
+
+function renderGirls() {
+  var html = '';
+  for (var gi = 0; gi < GIRLS.length; gi++) {
+    var g = GIRLS[gi];
+    var day = state.currentDay;
+    var dayPts = getDayPts(g.id, day);
+    var weekPts = getWeekPts(g.id);
+    var pct = Math.min(100, Math.round((weekPts / MAX_POINTS) * 100));
+    var money = ptsToMoney(weekPts);
+    var d = state.days[day][g.id];
+    var isCollapsed = !!collapsed[g.id];
+
+    // TASKS
+    var tasksHtml = '';
+    for (var ci = 0; ci < CATEGORIES.length; ci++) {
+      var cat = CATEGORIES[ci];
+      tasksHtml += '<div class="category-title">' + cat.label + '</div>';
+      for (var ti = 0; ti < cat.tasks.length; ti++) {
+        var t = cat.tasks[ti];
+        var val = d.tasks[t.id] || 0;
+        var tpts = Array.isArray(t.pts) ? t.pts[g.pi] : t.pts;
+
+        if (t.type === 'double') {
+          var maxV = 2;
+          var doneCls = val === 0 ? '' : (val === 1 ? ' done-partial' : ' done-full');
+          tasksHtml += '<div class="task-item' + doneCls + '">'
+            + '<div class="task-left"><span class="task-name">' + t.name + '</span>'
+            + '<span style="font-size:0.65rem;color:var(--text-light);margin-left:4px">' + (t.maxLabel || '') + '</span></div>'
+            + '<div class="task-counter">'
+            + '<button class="tc-btn minus" onclick="changeTask(\'' + g.id + '\',\'' + t.id + '\',\'' + day + '\',-1,2);event.stopPropagation()">−</button>'
+            + '<span class="tc-count" style="color:' + (val===0?'var(--text-light)':val===2?'var(--verde)':'var(--naranja,#F97316)') + '">' + val + '</span>'
+            + '<span class="tc-max">/' + maxV + '</span>'
+            + '<button class="tc-btn plus" onclick="changeTask(\'' + g.id + '\',\'' + t.id + '\',\'' + day + '\',1,2);event.stopPropagation()">+</button>'
+            + '<span class="task-pts">+' + tpts + ' c/u</span>'
+            + '</div></div>';
+        } else {
+          var done = !!val;
+          tasksHtml += '<div class="task-item' + (done ? ' done-full' : '') + '" onclick="toggleTask(\'' + g.id + '\',\'' + t.id + '\',\'' + day + '\')">'
+            + '<div class="task-left">'
+            + '<div class="task-check" style="' + (done ? 'background:var(--verde);border-color:var(--verde);color:white' : '') + '">' + (done ? '✓' : '') + '</div>'
+            + '<span class="task-name">' + t.name + '</span></div>'
+            + '<span class="task-pts">+' + tpts + ' pts</span></div>';
+        }
+      }
+    }
+
+    // NEGATIVES
+    var negsHtml = '<div class="category-title">⛔ Puntos negativos</div>';
+    for (var ni = 0; ni < NEGATIVES.length; ni++) {
+      var n = NEGATIVES[ni];
+      var cnt = (d.negatives && d.negatives[n.id]) || 0;
+      var npts = Array.isArray(n.pts) ? n.pts[g.pi] : n.pts;
+      negsHtml += '<div class="task-item negative">'
+        + '<div class="task-left" style="flex:1"><span class="task-name">' + n.name + '</span></div>'
+        + '<div class="neg-counter">'
+        + '<button class="neg-btn" onclick="changeNeg(\'' + g.id + '\',\'' + n.id + '\',\'' + day + '\',-1);event.stopPropagation()">−</button>'
+        + '<span class="neg-count">' + cnt + '</span>'
+        + '<button class="neg-btn" onclick="changeNeg(\'' + g.id + '\',\'' + n.id + '\',\'' + day + '\',1);event.stopPropagation()">+</button>'
+        + '<span class="task-pts neg-pts">' + npts + '</span>'
+        + '</div></div>';
+    }
+
+    html += '<div class="girl-panel' + (gi===1?' girl-2':'') + '">'
+      // HEADER (clickeable para colapsar)
+      + '<div class="girl-panel-header" onclick="toggleCollapse(\'' + g.id + '\')">'
+      + '<div class="girl-emoji">' + g.emoji + '</div>'
+      + '<div class="girl-header-info"><div class="girl-name">' + g.name + '</div><div class="girl-age">' + g.age + '</div></div>'
+      + '<div class="girl-header-score"><div class="girl-header-pts">' + weekPts + '</div><div class="girl-header-money">$' + money.toLocaleString('es-AR') + '</div></div>'
+      + '<div class="chevron' + (isCollapsed ? '' : ' open') + '">▾</div>'
+      + '</div>'
+      // BODY (colapsable)
+      + '<div class="girl-panel-body' + (isCollapsed ? ' collapsed' : '') + '">'
+      + '<div class="score-display">'
+      + '<div><div class="score-label">HOY (' + day + ')</div><div class="score-number">' + dayPts + '</div><div style="font-size:0.7rem;color:var(--text-light);font-weight:600">pts hoy</div></div>'
+      + '<div style="text-align:right"><div class="score-label">SEMANA</div><div class="score-number">' + weekPts + '/' + MAX_POINTS + '</div><div class="score-money">≈ $' + money.toLocaleString('es-AR') + '</div></div>'
+      + '</div>'
+      + '<div class="progress-bar-wrap"><div class="progress-bar" style="width:' + pct + '%"></div></div>'
+      + '<div style="text-align:right;font-size:0.7rem;color:var(--text-light);margin-top:3px;margin-bottom:2px">' + pct + '% de la semana</div>'
+      + tasksHtml + negsHtml
+      + '</div></div>';
+  }
+  document.getElementById('girlsGrid').innerHTML = html;
+}
+
+function renderShared() {
+  var day = state.currentDay;
+  if (!state.days[day].shared) state.days[day].shared = {};
+  var sh = state.days[day].shared;
+  var dayPts = getSharedDayPts(day);
+  var splitPts = Math.ceil(dayPts / 2);
+  var html = '<div class="shared-title">🤝 Tareas en equipo — ' + day + '</div>'
+    + '<div class="shared-subtitle">Puntos divididos entre las dos · Hoy: <strong>' + splitPts + ' pts c/u</strong></div>';
+  for (var i = 0; i < SHARED_TASKS.length; i++) {
+    var t = SHARED_TASKS[i];
+    var done = !!sh[t.id];
+    var each = Math.ceil(t.pts / 2);
+    var chk = done ? 'background:var(--verde);border-color:var(--verde);color:white' : 'border-color:#FFD60A';
+    html += '<div class="shared-task-item' + (done?' done':'') + '" onclick="toggleShared(\'' + t.id + '\',\'' + day + '\')">'
+      + '<div class="task-left"><div class="task-check" style="' + chk + '">' + (done?'✓':'') + '</div>'
+      + '<span class="task-name">' + t.name + '</span></div>'
+      + '<div style="display:flex;align-items:center;gap:5px">'
+      + '<span class="split-badge">+' + each + ' pts c/u</span>'
+      + '<span style="font-size:0.68rem;color:var(--text-light)">(' + t.pts + ')</span></div></div>';
+  }
+  document.getElementById('sharedSection').innerHTML = html;
+}
+
+function renderSummary() {
+  var html = '';
+  for (var gi = 0; gi < GIRLS.length; gi++) {
+    var g = GIRLS[gi];
+    var pts = getWeekPts(g.id);
+    var money = ptsToMoney(pts);
+    var pct = Math.min(100, Math.round((pts / MAX_POINTS) * 100));
+    html += '<div class="summary-card ' + (gi===0?'c1':'c2') + '">'
+      + '<div style="font-size:1.6rem">' + g.emoji + '</div>'
+      + '<div style="font-size:0.82rem;font-weight:800;color:var(--' + g.color + ');margin-bottom:4px">' + g.name + '</div>'
+      + '<div class="summary-pts ' + g.color + '">' + pts + ' pts</div>'
+      + '<div class="summary-money">$' + money.toLocaleString('es-AR') + '</div>'
+      + '<div class="summary-pct">' + pct + '% del máximo</div>'
+      + '<div style="margin-top:7px"><div class="progress-bar-wrap"><div class="progress-bar" style="width:' + pct + '%"></div></div></div>'
+      + '</div>';
+  }
+  document.getElementById('summaryGrid').innerHTML = html;
+}
+
+function renderRef() {
+  var rows = '<tr><th>Tarea</th><th>Categoría</th><th>Nao</th><th>Chiara</th></tr>';
+  for (var ci = 0; ci < CATEGORIES.length; ci++) {
+    var cat = CATEGORIES[ci];
+    for (var ti = 0; ti < cat.tasks.length; ti++) {
+      var t = cat.tasks[ti];
+      var p0 = Array.isArray(t.pts) ? t.pts[0] : t.pts;
+      var p1 = Array.isArray(t.pts) ? t.pts[1] : t.pts;
+      var suf = t.type === 'double' ? ' ×2' : '';
+      rows += '<tr><td>' + t.name + (t.type==='double'?' <span style="font-size:0.65rem;color:var(--text-light)">(mañana+noche)</span>':'') + '</td>'
+        + '<td><span class="cat-badge ' + cat.badge + '">' + cat.badgeText + '</span></td>'
+        + '<td><span class="pts-badge pts-pos">+' + p0 + suf + '</span></td>'
+        + '<td><span class="pts-badge pts-pos">+' + p1 + suf + '</span></td></tr>';
+    }
+  }
+  for (var ni = 0; ni < NEGATIVES.length; ni++) {
+    var n = NEGATIVES[ni];
+    var p0 = Array.isArray(n.pts) ? n.pts[0] : n.pts;
+    var p1 = Array.isArray(n.pts) ? n.pts[1] : n.pts;
+    rows += '<tr><td>' + n.name + '</td><td><span class="cat-badge cat-neg">NEGATIVO</span></td>'
+      + '<td><span class="pts-badge pts-neg">' + p0 + '</span></td><td><span class="pts-badge pts-neg">' + p1 + '</span></td></tr>';
+  }
+  rows += '<tr style="background:#F9FAFB"><td colspan="2" style="font-weight:800">MÁXIMO SEMANAL</td><td colspan="2"><span class="pts-badge pts-pos">200 pts = $10.000</span></td></tr>';
+  document.getElementById('refTable').innerHTML = rows;
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function toggleCollapse(girlId) {
+  collapsed[girlId] = !collapsed[girlId];
+  renderGirls();
+}
+
+function toggleTask(girlId, taskId, day) {
+  var girl = null;
+  for (var i = 0; i < GIRLS.length; i++) { if (GIRLS[i].id === girlId) { girl = GIRLS[i]; break; } }
+  var d = state.days[day][girlId];
+  var wasDone = !!d.tasks[taskId];
+  d.tasks[taskId] = wasDone ? 0 : 1;
+  if (!wasDone) {
+    for (var ci = 0; ci < CATEGORIES.length; ci++) {
+      for (var ti = 0; ti < CATEGORIES[ci].tasks.length; ti++) {
+        if (CATEGORIES[ci].tasks[ti].id === taskId) {
+          var p = CATEGORIES[ci].tasks[ti].pts;
+          showToast('+' + (Array.isArray(p) ? p[girl.pi] : p) + ' pts ✨');
+          spawnConfetti(); break;
+        }
+      }
+    }
+  }
+  scheduleSave();
+}
+
+function changeTask(girlId, taskId, day, delta, maxVal) {
+  var girl = null;
+  for (var i = 0; i < GIRLS.length; i++) { if (GIRLS[i].id === girlId) { girl = GIRLS[i]; break; } }
+  var d = state.days[day][girlId];
+  var cur = d.tasks[taskId] || 0;
+  var next = Math.max(0, Math.min(maxVal, cur + delta));
+  d.tasks[taskId] = next;
+  if (delta > 0 && next > cur) {
+    for (var ci = 0; ci < CATEGORIES.length; ci++) {
+      for (var ti = 0; ti < CATEGORIES[ci].tasks.length; ti++) {
+        if (CATEGORIES[ci].tasks[ti].id === taskId) {
+          var p = CATEGORIES[ci].tasks[ti].pts;
+          showToast('+' + (Array.isArray(p) ? p[girl.pi] : p) + ' pts ✨');
+          spawnConfetti(); break;
+        }
+      }
+    }
+  }
+  scheduleSave();
+}
+
+function changeNeg(girlId, negId, day, delta) {
+  var girl = null;
+  for (var i = 0; i < GIRLS.length; i++) { if (GIRLS[i].id === girlId) { girl = GIRLS[i]; break; } }
+  var d = state.days[day][girlId];
+  d.negatives[negId] = Math.max(0, (d.negatives[negId] || 0) + delta);
+  if (delta > 0) {
+    for (var ni = 0; ni < NEGATIVES.length; ni++) {
+      if (NEGATIVES[ni].id === negId) {
+        var p = NEGATIVES[ni].pts;
+        showToast((Array.isArray(p) ? p[girl.pi] : p) + ' pts ⛔'); break;
+      }
+    }
+  }
+  scheduleSave();
+}
+
+function toggleShared(taskId, day) {
+  if (!state.days[day].shared) state.days[day].shared = {};
+  var wasDone = !!state.days[day].shared[taskId];
+  state.days[day].shared[taskId] = !wasDone;
+  if (!wasDone) {
+    for (var i = 0; i < SHARED_TASKS.length; i++) {
+      if (SHARED_TASKS[i].id === taskId) {
+        showToast('+' + Math.ceil(SHARED_TASKS[i].pts/2) + ' pts c/u 🤝');
+        spawnConfetti(); break;
+      }
+    }
+  }
+  scheduleSave();
+}
+
+function selectDay(day) {
+  state.currentDay = day;
+  scheduleSave();
+}
+
+function confirmReset() {
+  if (confirm('¿Empezar nueva semana? Se borran todos los puntos.')) {
+    state = defaultState();
+    scheduleSave();
+    renderRef();
+    showToast('¡Nueva semana! 🌟');
+  }
+}
+
+// ============================================================
+// FX
+// ============================================================
+var toastTimer;
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 2000);
+}
+
+function spawnConfetti() {
+  var emojis = ['⭐','🌟','✨','🎉','💫'];
+  for (var i = 0; i < 3; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var el = document.createElement('div');
+        el.className = 'confetti-pop';
+        el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        el.style.left = (30+Math.random()*40)+'%';
+        document.body.appendChild(el);
+        setTimeout(function(){el.remove();},900);
+      }, idx*150);
+    })(i);
+  }
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
