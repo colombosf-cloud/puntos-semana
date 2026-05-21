@@ -383,7 +383,9 @@ function scheduleSave() {
         catch(e2) { setSyncStatus('error', 'Sin conexión'); }
       }, 3000);
     }
-  }, 800);
+  }, 600);
+  // Render INMEDIATO — no espera al guardado
+  renderAll();
 }
 
 // ============================================================
@@ -749,31 +751,24 @@ function toggleCollapse(girlId) {
   renderGirls();
 }
 
-function selectDay(day) {
-  state.currentDay = day;
-  scheduleSave();
-  renderAll();
-}
-
 function toggleTask(girlId, taskId, day) {
   var girl = null;
   for (var i = 0; i < GIRLS.length; i++) { if (GIRLS[i].id === girlId) { girl = GIRLS[i]; break; } }
   var d = state.days[day][girlId];
   var wasDone = !!d.tasks[taskId];
   d.tasks[taskId] = wasDone ? 0 : 1;
-  scheduleSave();
   if (!wasDone) {
     for (var ci = 0; ci < CATEGORIES.length; ci++) {
       for (var ti = 0; ti < CATEGORIES[ci].tasks.length; ti++) {
         if (CATEGORIES[ci].tasks[ti].id === taskId) {
           var p = CATEGORIES[ci].tasks[ti].pts;
           showToast('+' + (Array.isArray(p) ? p[girl.pi] : p) + ' pts ✨');
-          spawnConfetti(); return;
+          spawnConfetti(); break;
         }
       }
     }
   }
-  renderAll();
+  scheduleSave();
 }
 
 function changeTask(girlId, taskId, day, delta, maxVal) {
@@ -783,7 +778,6 @@ function changeTask(girlId, taskId, day, delta, maxVal) {
   var cur = d.tasks[taskId] || 0;
   var next = Math.max(0, Math.min(maxVal, cur + delta));
   d.tasks[taskId] = next;
-  scheduleSave();
   if (delta > 0 && next > cur) {
     for (var ci = 0; ci < CATEGORIES.length; ci++) {
       for (var ti = 0; ti < CATEGORIES[ci].tasks.length; ti++) {
@@ -795,7 +789,7 @@ function changeTask(girlId, taskId, day, delta, maxVal) {
       }
     }
   }
-  renderAll();
+  scheduleSave();
 }
 
 function changeNeg(girlId, negId, day, delta) {
@@ -803,7 +797,6 @@ function changeNeg(girlId, negId, day, delta) {
   for (var i = 0; i < GIRLS.length; i++) { if (GIRLS[i].id === girlId) { girl = GIRLS[i]; break; } }
   var d = state.days[day][girlId];
   d.negatives[negId] = Math.max(0, (d.negatives[negId] || 0) + delta);
-  scheduleSave();
   if (delta > 0) {
     for (var ni = 0; ni < NEGATIVES.length; ni++) {
       if (NEGATIVES[ni].id === negId) {
@@ -812,14 +805,13 @@ function changeNeg(girlId, negId, day, delta) {
       }
     }
   }
-  renderAll();
+  scheduleSave();
 }
 
 function toggleShared(taskId, day) {
   if (!state.days[day].shared) state.days[day].shared = {};
   var wasDone = !!state.days[day].shared[taskId];
   state.days[day].shared[taskId] = !wasDone;
-  scheduleSave();
   if (!wasDone) {
     for (var i = 0; i < SHARED_TASKS.length; i++) {
       if (SHARED_TASKS[i].id === taskId) {
@@ -828,14 +820,19 @@ function toggleShared(taskId, day) {
       }
     }
   }
-  renderAll();
+  scheduleSave();
+}
+
+function selectDay(day) {
+  state.currentDay = day;
+  scheduleSave();
 }
 
 function confirmReset() {
   if (confirm('¿Empezar nueva semana? Se borran todos los puntos.')) {
     state = defaultState();
     scheduleSave();
-    renderAll(); renderRef();
+    renderRef();
     showToast('¡Nueva semana! 🌟');
   }
 }
