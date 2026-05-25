@@ -617,14 +617,24 @@ function hasDayData(day) {
   return false;
 }
 
-// Qué número de semana es en el mes actual (basado en historial)
+// Semana del mes calendario (1-5) basada en la fecha real
+function getCalendarWeekOfMonth(dateStr) {
+  var d = dateStr ? new Date(dateStr+'T12:00:00') : new Date();
+  var year = d.getFullYear();
+  var month = d.getMonth();
+  // Primer día del mes
+  var firstDay = new Date(year, month, 1);
+  // Número de día en el mes (1-based)
+  var dayOfMonth = d.getDate();
+  // Día de la semana del primer día (0=Dom, ajustamos a Lun=0)
+  var firstDow = (firstDay.getDay() + 6) % 7; // Lunes=0
+  // Semana calendario
+  return Math.ceil((dayOfMonth + firstDow) / 7);
+}
+
+// Semana del mes del inicio de la semana actual
 function currentWeekNumber() {
-  var monthLabel = getMonthYear(state.currentWeek.startDate);
-  var count = 1;
-  for(var i=0;i<state.weekHistory.length;i++){
-    if(getMonthYear(state.weekHistory[i].startDate)===monthLabel) count++;
-  }
-  return count;
+  return getCalendarWeekOfMonth(state.currentWeek.startDate);
 }
 
 // ============================================================
@@ -651,7 +661,7 @@ function closeWeek() {
   if(!confirm('¿Cerrar esta semana y guardarla en el historial?')) return;
 
   var endD = today();
-  var weekNum = currentWeekNumber();
+  var weekNum = getCalendarWeekOfMonth(state.currentWeek.startDate);
   var monthLabel = getMonthYear(state.currentWeek.startDate);
 
   var record = {
@@ -666,7 +676,7 @@ function closeWeek() {
   };
 
   state.weekHistory.push(record);
-  state.currentWeek = defaultWeek();
+  state.currentWeek = defaultWeek(); // defaultWeek ya usa today() para startDate
   scheduleSave();
   showToast('¡Semana guardada! 🎉');
   spawnConfetti();
